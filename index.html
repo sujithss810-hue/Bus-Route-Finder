@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Route Finder</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #e3f2fd, #ffffff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background: white;
+            padding: 30px;
+            border-radius: 18px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.12);
+        }
+
+        h1 {
+            text-align: center;
+            color: #1565c0;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 7px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        select, button {
+            width: 100%;
+            padding: 13px;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        select {
+            border: 1px solid #ccc;
+            background: white;
+        }
+
+        button {
+            margin-top: 22px;
+            border: none;
+            background: #1565c0;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #0d47a1;
+        }
+
+        #result {
+            margin-top: 25px;
+        }
+
+        .route-card {
+            background: #f5f9ff;
+            border-left: 5px solid #1565c0;
+            padding: 18px;
+            border-radius: 8px;
+        }
+
+        .route-card h2 {
+            color: #1565c0;
+            margin-bottom: 12px;
+        }
+
+        .route-info {
+            margin: 8px 0;
+            color: #333;
+        }
+
+        .stops {
+            margin-top: 15px;
+            padding-left: 20px;
+        }
+
+        .error {
+            color: #d32f2f;
+            background: #ffebee;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #1565c0;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🚌 Bus Route Finder</h1>
+
+    <p class="subtitle">
+        Find the best bus route between two locations
+    </p>
+
+    <label for="from">From</label>
+    <select id="from">
+        <option value="">Select starting point</option>
+        <option value="Majestic">Majestic</option>
+        <option value="Shivajinagar">Shivajinagar</option>
+        <option value="Indiranagar">Indiranagar</option>
+        <option value="Whitefield">Whitefield</option>
+        <option value="Electronic City">Electronic City</option>
+        <option value="Yeshwanthpur">Yeshwanthpur</option>
+    </select>
+
+    <label for="to">To</label>
+    <select id="to">
+        <option value="">Select destination</option>
+        <option value="Majestic">Majestic</option>
+        <option value="Shivajinagar">Shivajinagar</option>
+        <option value="Indiranagar">Indiranagar</option>
+        <option value="Whitefield">Whitefield</option>
+        <option value="Electronic City">Electronic City</option>
+        <option value="Yeshwanthpur">Yeshwanthpur</option>
+    </select>
+
+    <button onclick="findRoute()">Find Bus Route</button>
+
+    <div id="result"></div>
+
+</div>
+
+<script>
+async function findRoute() {
+
+    const from = document.getElementById("from").value;
+    const to = document.getElementById("to").value;
+    const result = document.getElementById("result");
+
+    if (!from || !to) {
+        result.innerHTML =
+            '<div class="error">Please select both starting point and destination.</div>';
+        return;
+    }
+
+    if (from === to) {
+        result.innerHTML =
+            '<div class="error">Starting point and destination cannot be the same.</div>';
+        return;
+    }
+
+    result.innerHTML =
+        '<div class="loading">Finding bus route...</div>';
+
+    try {
+
+        const response = await fetch(
+            `/api/route?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || "Route not found");
+        }
+
+        result.innerHTML = `
+            <div class="route-card">
+
+                <h2>🚌 ${data.bus_number}</h2>
+
+                <div class="route-info">
+                    <strong>From:</strong> ${data.from}
+                </div>
+
+                <div class="route-info">
+                    <strong>To:</strong> ${data.to}
+                </div>
+
+                <div class="route-info">
+                    <strong>Travel Time:</strong> ${data.travel_time}
+                </div>
+
+                <div class="route-info">
+                    <strong>Bus Type:</strong> ${data.bus_type}
+                </div>
+
+                <div class="route-info">
+                    <strong>Fare:</strong> ₹${data.fare}
+                </div>
+
+                <h3 style="margin-top:15px;">Route Stops</h3>
+
+                <ol class="stops">
+                    ${data.stops.map(stop => `<li>${stop}</li>`).join("")}
+                </ol>
+
+            </div>
+        `;
+
+    } catch (error) {
+
+        result.innerHTML =
+            `<div class="error">${error.message}</div>`;
+    }
+}
+</script>
+
+</body>
+</html>
